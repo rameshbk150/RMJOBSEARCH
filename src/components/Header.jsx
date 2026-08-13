@@ -25,8 +25,15 @@ export default function Header({ siteData }) {
 
   const [mobileMenu, setMobileMenu] = useState(false);
   const [profileMenu, setProfileMenu] = useState(false);
+
   const [user, setUser] = useState(null);
   const [authLoaded, setAuthLoaded] = useState(false);
+
+  // ======================================================
+  // SEARCH
+  // ======================================================
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const profileRef = useRef(null);
 
@@ -49,7 +56,10 @@ export default function Header({ siteData }) {
 
         setUser(parsedUser);
       } catch (error) {
-        console.error("Unable to load logged-in user:", error);
+        console.error(
+          "Unable to load logged-in user:",
+          error
+        );
 
         localStorage.removeItem("user");
         localStorage.removeItem("token");
@@ -63,19 +73,32 @@ export default function Header({ siteData }) {
     loadUser();
 
     // Same-tab login/logout updates
-    window.addEventListener("authChanged", loadUser);
+    window.addEventListener(
+      "authChanged",
+      loadUser
+    );
 
-    // Updates if auth changes in another browser tab
-    window.addEventListener("storage", loadUser);
+    // Another browser tab
+    window.addEventListener(
+      "storage",
+      loadUser
+    );
 
     return () => {
-      window.removeEventListener("authChanged", loadUser);
-      window.removeEventListener("storage", loadUser);
+      window.removeEventListener(
+        "authChanged",
+        loadUser
+      );
+
+      window.removeEventListener(
+        "storage",
+        loadUser
+      );
     };
   }, []);
 
   // ======================================================
-  // CLOSE PROFILE DROPDOWN WHEN CLICKING OUTSIDE
+  // CLOSE PROFILE DROPDOWN
   // ======================================================
 
   useEffect(() => {
@@ -88,7 +111,10 @@ export default function Header({ siteData }) {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
     return () => {
       document.removeEventListener(
@@ -109,12 +135,40 @@ export default function Header({ siteData }) {
       }
     };
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
     };
   }, []);
+
+  // ======================================================
+  // SEARCH JOBS
+  // ======================================================
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+
+    const query = searchQuery.trim();
+
+    if (!query) {
+      router.push("/jobs");
+      return;
+    }
+
+    router.push(
+      `/jobs?q=${encodeURIComponent(query)}`
+    );
+
+    // Close mobile menu after searching
+    setMobileMenu(false);
+  };
 
   // ======================================================
   // LOGOUT
@@ -128,7 +182,9 @@ export default function Header({ siteData }) {
     setProfileMenu(false);
     setMobileMenu(false);
 
-    window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(
+      new Event("authChanged")
+    );
 
     router.push("/");
     router.refresh();
@@ -141,14 +197,21 @@ export default function Header({ siteData }) {
   const getInitial = () => {
     if (!user?.name) return "U";
 
-    return user.name.trim().charAt(0).toUpperCase();
+    return user.name
+      .trim()
+      .charAt(0)
+      .toUpperCase();
   };
 
-  // Prevent brief Login/Register flash before localStorage loads
+  // ======================================================
+  // AUTH LOADING
+  // ======================================================
+
   if (!authLoaded) {
     return (
       <header className="main-header">
         <div className="header-container">
+
           <Link
             href="/"
             className="header-logo"
@@ -156,13 +219,17 @@ export default function Header({ siteData }) {
           >
             <Image
               src={siteData.logo}
-              alt={siteData?.name || "Job Portal"}
+              alt={
+                siteData?.name ||
+                "Job Portal"
+              }
               width={700}
               height={400}
               priority
               className="header-logo-image"
             />
           </Link>
+
         </div>
       </header>
     );
@@ -170,6 +237,7 @@ export default function Header({ siteData }) {
 
   return (
     <header className="main-header">
+
       <div className="header-container">
 
         {/* ================================================= */}
@@ -187,7 +255,10 @@ export default function Header({ siteData }) {
         >
           <Image
             src={siteData.logo}
-            alt={siteData?.name || "Job Portal"}
+            alt={
+              siteData?.name ||
+              "Job Portal"
+            }
             width={700}
             height={400}
             priority
@@ -200,7 +271,11 @@ export default function Header({ siteData }) {
         {/* ================================================= */}
 
         <div className="header-search-area">
-          <div className="header-search-box">
+
+          <form
+            onSubmit={handleSearch}
+            className="header-search-box"
+          >
 
             <Search
               size={18}
@@ -209,11 +284,40 @@ export default function Header({ siteData }) {
 
             <input
               type="search"
+              value={searchQuery}
+              onChange={(event) =>
+                setSearchQuery(
+                  event.target.value
+                )
+              }
               placeholder="Search jobs, companies, skills..."
               className="header-search-input"
+              aria-label="Search jobs"
             />
 
-          </div>
+            {searchQuery && (
+              <button
+                type="button"
+                className="header-search-clear"
+                onClick={() =>
+                  setSearchQuery("")
+                }
+                aria-label="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
+
+            <button
+              type="submit"
+              className="header-search-submit"
+              aria-label="Search"
+            >
+              <Search size={17} />
+            </button>
+
+          </form>
+
         </div>
 
         {/* ================================================= */}
@@ -224,15 +328,17 @@ export default function Header({ siteData }) {
 
           <div className="header-nav-links">
 
-            {siteData.navLinks?.map((link) => (
-              <Link
-                href={link.href}
-                key={link.href}
-                className="header-nav-link"
-              >
-                {link.name}
-              </Link>
-            ))}
+            {siteData.navLinks?.map(
+              (link) => (
+                <Link
+                  href={link.href}
+                  key={link.href}
+                  className="header-nav-link"
+                >
+                  {link.name}
+                </Link>
+              )
+            )}
 
           </div>
 
@@ -277,11 +383,13 @@ export default function Header({ siteData }) {
                 href="/credits"
                 className="header-credit-box"
               >
+
                 <div className="header-credit-icon">
                   <Coins size={18} />
                 </div>
 
                 <div className="header-credit-content">
+
                   <span className="header-credit-label">
                     Available Credits
                   </span>
@@ -289,7 +397,9 @@ export default function Header({ siteData }) {
                   <span className="header-credit-number">
                     {user.credits ?? 0}
                   </span>
+
                 </div>
+
               </Link>
 
               {/* PROFILE */}
@@ -308,27 +418,35 @@ export default function Header({ siteData }) {
                   }`}
                   onClick={() =>
                     setProfileMenu(
-                      (previous) => !previous
+                      (previous) =>
+                        !previous
                     )
                   }
-                  aria-expanded={profileMenu}
+                  aria-expanded={
+                    profileMenu
+                  }
                   aria-label="Open account menu"
                 >
 
                   <UserAvatar
                     user={user}
-                    getInitial={getInitial}
+                    getInitial={
+                      getInitial
+                    }
                     size="small"
                   />
 
                   <div className="header-profile-text">
+
                     <span className="header-profile-name">
-                      {user.name || "My Account"}
+                      {user.name ||
+                        "My Account"}
                     </span>
 
                     <span className="header-profile-subtitle">
                       My Account
                     </span>
+
                   </div>
 
                   <ChevronDown
@@ -353,20 +471,25 @@ export default function Header({ siteData }) {
 
                       <UserAvatar
                         user={user}
-                        getInitial={getInitial}
+                        getInitial={
+                          getInitial
+                        }
                         size="large"
                       />
 
                       <div className="profile-dropdown-details">
 
                         <p className="profile-dropdown-name">
-                          {user.name || "User"}
+                          {user.name ||
+                            "User"}
                         </p>
 
                         <p className="profile-dropdown-info">
                           {user.email ||
                             user.phone ||
-                            `User ID: ${user.id || "-"}`}
+                            `User ID: ${
+                              user.id || "-"
+                            }`}
                         </p>
 
                       </div>
@@ -376,13 +499,16 @@ export default function Header({ siteData }) {
                     <div className="profile-dropdown-credit-card">
 
                       <div>
+
                         <p className="profile-credit-label">
                           Available Credits
                         </p>
 
                         <p className="profile-credit-value">
-                          {user.credits ?? 0}
+                          {user.credits ??
+                            0}
                         </p>
+
                       </div>
 
                       <div className="profile-credit-icon">
@@ -397,30 +523,46 @@ export default function Header({ siteData }) {
 
                       <DropdownLink
                         href="/profile"
-                        icon={<UserRound size={18} />}
+                        icon={
+                          <UserRound
+                            size={18}
+                          />
+                        }
                         label="View Profile"
                         onClick={() =>
-                          setProfileMenu(false)
+                          setProfileMenu(
+                            false
+                          )
                         }
                       />
 
                       <DropdownLink
                         href="/applied-jobs"
                         icon={
-                          <BriefcaseBusiness size={18} />
+                          <BriefcaseBusiness
+                            size={18}
+                          />
                         }
                         label="Applied Jobs"
                         onClick={() =>
-                          setProfileMenu(false)
+                          setProfileMenu(
+                            false
+                          )
                         }
                       />
 
                       <DropdownLink
                         href="/profile/settings"
-                        icon={<Settings size={18} />}
+                        icon={
+                          <Settings
+                            size={18}
+                          />
+                        }
                         label="Account Settings"
                         onClick={() =>
-                          setProfileMenu(false)
+                          setProfileMenu(
+                            false
+                          )
                         }
                       />
 
@@ -430,7 +572,9 @@ export default function Header({ siteData }) {
 
                     <button
                       type="button"
-                      onClick={handleLogout}
+                      onClick={
+                        handleLogout
+                      }
                       className="profile-dropdown-logout"
                     >
                       <LogOut size={18} />
@@ -459,7 +603,8 @@ export default function Header({ siteData }) {
           className="header-mobile-button"
           onClick={() => {
             setMobileMenu(
-              (previous) => !previous
+              (previous) =>
+                !previous
             );
 
             setProfileMenu(false);
@@ -485,14 +630,18 @@ export default function Header({ siteData }) {
 
           <div className="mobile-header-container">
 
+            {/* ================================================= */}
             {/* LOGGED IN USER */}
+            {/* ================================================= */}
 
             {user && (
               <div className="mobile-user-card">
 
                 <UserAvatar
                   user={user}
-                  getInitial={getInitial}
+                  getInitial={
+                    getInitial
+                  }
                   size="large"
                 />
 
@@ -514,18 +663,27 @@ export default function Header({ siteData }) {
                   href="/profile"
                   className="mobile-profile-arrow"
                   onClick={() =>
-                    setMobileMenu(false)
+                    setMobileMenu(
+                      false
+                    )
                   }
                 >
-                  <ChevronRight size={18} />
+                  <ChevronRight
+                    size={18}
+                  />
                 </Link>
 
               </div>
             )}
 
-            {/* SEARCH */}
+            {/* ================================================= */}
+            {/* MOBILE SEARCH */}
+            {/* ================================================= */}
 
-            <div className="mobile-search-box">
+            <form
+              onSubmit={handleSearch}
+              className="mobile-search-box"
+            >
 
               <Search
                 size={18}
@@ -534,36 +692,76 @@ export default function Header({ siteData }) {
 
               <input
                 type="search"
+                value={searchQuery}
+                onChange={(event) =>
+                  setSearchQuery(
+                    event.target.value
+                  )
+                }
                 placeholder="Search jobs, companies, skills..."
                 className="mobile-search-input"
+                aria-label="Search jobs"
               />
 
-            </div>
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="mobile-search-clear"
+                  onClick={() =>
+                    setSearchQuery("")
+                  }
+                  aria-label="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              )}
 
+              <button
+                type="submit"
+                className="mobile-search-submit"
+                aria-label="Search"
+              >
+                <Search size={17} />
+              </button>
+
+            </form>
+
+            {/* ================================================= */}
             {/* NAVIGATION */}
+            {/* ================================================= */}
 
             <div className="mobile-nav-links">
 
-              {siteData.navLinks?.map((link) => (
-                <Link
-                  href={link.href}
-                  key={link.href}
-                  className="mobile-nav-link"
-                  onClick={() =>
-                    setMobileMenu(false)
-                  }
-                >
-                  <span>
-                    {link.name}
-                  </span>
+              {siteData.navLinks?.map(
+                (link) => (
+                  <Link
+                    href={link.href}
+                    key={link.href}
+                    className="mobile-nav-link"
+                    onClick={() =>
+                      setMobileMenu(
+                        false
+                      )
+                    }
+                  >
 
-                  <ChevronRight size={17} />
-                </Link>
-              ))}
+                    <span>
+                      {link.name}
+                    </span>
+
+                    <ChevronRight
+                      size={17}
+                    />
+
+                  </Link>
+                )
+              )}
 
             </div>
 
+            {/* ================================================= */}
             {/* BEFORE LOGIN */}
+            {/* ================================================= */}
 
             {!user && (
               <div className="mobile-auth-buttons">
@@ -572,11 +770,12 @@ export default function Header({ siteData }) {
                   href="/login"
                   className="mobile-login-button"
                   onClick={() =>
-                    setMobileMenu(false)
+                    setMobileMenu(
+                      false
+                    )
                   }
                 >
                   <LogIn size={18} />
-
                   Login
                 </Link>
 
@@ -584,18 +783,21 @@ export default function Header({ siteData }) {
                   href="/register"
                   className="mobile-register-button"
                   onClick={() =>
-                    setMobileMenu(false)
+                    setMobileMenu(
+                      false
+                    )
                   }
                 >
                   <UserPlus size={18} />
-
                   Register
                 </Link>
 
               </div>
             )}
 
+            {/* ================================================= */}
             {/* AFTER LOGIN */}
+            {/* ================================================= */}
 
             {user && (
               <div className="mobile-user-section">
@@ -604,9 +806,12 @@ export default function Header({ siteData }) {
                   href="/credits"
                   className="mobile-credit-card"
                   onClick={() =>
-                    setMobileMenu(false)
+                    setMobileMenu(
+                      false
+                    )
                   }
                 >
+
                   <div className="mobile-credit-left">
 
                     <Coins size={19} />
@@ -620,16 +825,22 @@ export default function Header({ siteData }) {
                   <strong>
                     {user.credits ?? 0}
                   </strong>
+
                 </Link>
 
                 <Link
                   href="/profile"
                   className="mobile-account-link"
                   onClick={() =>
-                    setMobileMenu(false)
+                    setMobileMenu(
+                      false
+                    )
                   }
                 >
-                  <UserRound size={18} />
+
+                  <UserRound
+                    size={18}
+                  />
 
                   <span>
                     View Profile
@@ -639,16 +850,22 @@ export default function Header({ siteData }) {
                     size={16}
                     className="mobile-link-arrow"
                   />
+
                 </Link>
 
                 <Link
                   href="/applied-jobs"
                   className="mobile-account-link"
                   onClick={() =>
-                    setMobileMenu(false)
+                    setMobileMenu(
+                      false
+                    )
                   }
                 >
-                  <BriefcaseBusiness size={18} />
+
+                  <BriefcaseBusiness
+                    size={18}
+                  />
 
                   <span>
                     Applied Jobs
@@ -658,15 +875,19 @@ export default function Header({ siteData }) {
                     size={16}
                     className="mobile-link-arrow"
                   />
+
                 </Link>
 
                 <Link
                   href="/profile/settings"
                   className="mobile-account-link"
                   onClick={() =>
-                    setMobileMenu(false)
+                    setMobileMenu(
+                      false
+                    )
                   }
                 >
+
                   <Settings size={18} />
 
                   <span>
@@ -677,16 +898,21 @@ export default function Header({ siteData }) {
                     size={16}
                     className="mobile-link-arrow"
                   />
+
                 </Link>
 
                 <button
                   type="button"
-                  onClick={handleLogout}
+                  onClick={
+                    handleLogout
+                  }
                   className="mobile-logout-button"
                 >
+
                   <LogOut size={18} />
 
                   Sign out
+
                 </button>
 
               </div>
@@ -718,13 +944,21 @@ function UserAvatar({
   if (user?.avatar) {
     return (
       <div className={avatarClass}>
+
         <Image
           src={user.avatar}
-          alt={user.name || "User"}
+          alt={
+            user.name || "User"
+          }
           fill
-          sizes={size === "large" ? "48px" : "40px"}
+          sizes={
+            size === "large"
+              ? "48px"
+              : "40px"
+          }
           className="user-avatar-image"
         />
+
       </div>
     );
   }
@@ -754,6 +988,7 @@ function DropdownLink({
       onClick={onClick}
       className="profile-dropdown-link"
     >
+
       <span className="profile-dropdown-link-icon">
         {icon}
       </span>
@@ -766,6 +1001,7 @@ function DropdownLink({
         size={16}
         className="profile-dropdown-link-arrow"
       />
+
     </Link>
   );
 }
