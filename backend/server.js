@@ -3,6 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 
 import authRoutes from "./routes/authRoutes.js";
+import applicationRoutes from "./routes/applicationRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 
 const app = express();
@@ -25,6 +26,8 @@ app.use(express.json());
 /* ================================= */
 
 app.use("/api/auth", authRoutes);
+
+app.use("/api/applications", applicationRoutes);
 
 app.use("/api/profile", profileRoutes);
 
