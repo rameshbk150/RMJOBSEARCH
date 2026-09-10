@@ -1,12 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import JobCard from "@/components/JobCard";
 import { jobsData } from "@/data/DataSite";
 
 export default function JobsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 py-12" /> }>
+      <JobsPageContent />
+    </Suspense>
+  );
+}
+
+function JobsPageContent() {
   const searchParams = useSearchParams();
 
   // Get search query from Header
